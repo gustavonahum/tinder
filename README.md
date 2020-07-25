@@ -1,2 +1,2 @@
-# tinder
-Go implementation for tinder
+# go-tinder
+Go implementation of a relationship app
