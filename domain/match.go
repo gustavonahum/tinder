@@ -7,9 +7,9 @@ import (
 
 type Match struct {
 	ID        int64     `json:"id"`
-	IDUser1   int64     `json:"id_user_1"`
-	IDUser2   int64     `json:"id_user_2"`
+	IDUserMatched   int64     `json:"id_user_matched"`
 	CreatedAt time.Time `json:"created_at"`
+	ChatMessages	[]ChatMessage `json:"chat_messages"`
 }
 
 type MatchUsecase interface {

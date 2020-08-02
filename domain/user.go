@@ -7,10 +7,10 @@ import (
 
 type User struct {
 	ID            int64     `json:"id"`
-	Name          string    `json:"name"`
-	Birthday      time.Time `json:"birthday"`
+	Profile	Profile `json:"profile"`
 	LikesReceived []Like    `json:"likes_received"`
 	Matches []Match    `json:"matches"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type UserUsecase interface {

@@ -7,61 +7,50 @@ import (
 	"time"
 )
 
-func (u *userUsecase) Like(ctx context.Context, idLiker int64, idLiked int64, isSuper bool) error {
+func (u *userUsecase) Like(ctx context.Context, userLiker domain.User, userLiked domain.User, isSuper bool) error {
 	// Checks if possible Match
-	userLiker, err := u.userRepository.GetByID(ctx, idLiker)
-	if err != nil {
-		log.Println("Error while querying User Liker")
-		return err
-	}
 	likesReceivedByLiker := userLiker.LikesReceived
 	for _, likeReceivedByLiker := range likesReceivedByLiker {
 		// Match
-		if likeReceivedByLiker.IDLiker == idLiked {
-			newMatch := domain.Match{IDUser1: idLiker, IDUser2: idLiked, CreatedAt: time.Now().UTC()}
-			matchesLiker := append(userLiker.Matches, newMatch)
+		if likeReceivedByLiker.IDLiker == userLiked.ID {
+			newMatchLiker := domain.Match{IDUserMatched: userLiked.ID, CreatedAt: time.Now().UTC()}
+			matchesLiker := append(userLiker.Matches, newMatchLiker)
 			userLiker.Matches = matchesLiker
-			u.userRepository.Store(ctx, &userLiker)
-
-			userLiked, err := u.userRepository.GetByID(ctx, idLiked)
+			err := u.userRepository.Store(ctx, &userLiker)
 			if err != nil {
-				log.Println("Error while querying User Liked")
+				log.Println("Error while storing new match")
 				return err
 			}
-			matchesLiked := append(userLiked.Matches, newMatch)
+
+			newMatchLiked := domain.Match{IDUserMatched: userLiker.ID, CreatedAt: time.Now().UTC()}
+			matchesLiked := append(userLiked.Matches, newMatchLiked)
 			userLiked.Matches = matchesLiked
-			u.userRepository.Store(ctx, &userLiked)
+			err = u.userRepository.Store(ctx, &userLiked)
+			if err != nil {
+				log.Println("Error while storing new match")
+				return err
+			}
 		}
 	}
 
 	// If not yet Match
-	userLiked, err := u.userRepository.GetByID(ctx, idLiked)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	newLike := domain.Like{IDLiker: idLiker, IsSuper: isSuper, CreatedAt: time.Now().UTC()}
+	newLike := domain.Like{IDLiker: userLiker.ID, IsSuper: isSuper, CreatedAt: time.Now().UTC()}
 	updatedLikes := append(userLiked.LikesReceived, newLike)
 	userLiked.LikesReceived = updatedLikes
-	err = u.userRepository.Store(ctx, &userLiked)
+	err := u.userRepository.Store(ctx, &userLiked)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error while storing new like")
 		return err
 	}
 	return nil
 }
 
-func (u *userUsecase) Nope(ctx context.Context, idNoper int64, idNoped int64) error {
+func (u *userUsecase) Nope(ctx context.Context, userNoper domain.User, userNoped domain.User) error {
 	// Checks if Noper had been liked
-	userNoper, err := u.userRepository.GetByID(ctx, idNoper)
-	if err != nil {
-		log.Println("Error while querying User Noper")
-		return err
-	}
 	likesReceivedByNoper := userNoper.LikesReceived
 	for i, likeReceivedByNoper := range likesReceivedByNoper {
 		// Had been liked
-		if likeReceivedByNoper.IDLiker == idNoped {
+		if likeReceivedByNoper.IDLiker == userNoped.ID {
 			// Remove Noped from Noper list of received likes
 			likesReceivedByNoper[i] = likesReceivedByNoper[len(likesReceivedByNoper)-1]
 			userNoper.LikesReceived = likesReceivedByNoper[:len(likesReceivedByNoper)-1]
